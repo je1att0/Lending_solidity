@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import {Test} from "forge-std/Test.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {UpsideAcademyLending} from "../src/UpsideAcademyLending.sol";
+import {IPriceOracle, UpsideAcademyLending} from "../src/UpsideAcademyLending.sol";
 
 contract CUSDC is ERC20 {
     constructor() ERC20("Circle Stable Coin", "USDC") {
@@ -51,7 +51,7 @@ contract Testx is Test {
         usdc = new CUSDC();
 
         // TDOO 아래 setUp이 정상작동 할 수 있도록 여러분의 Lending Contract를 수정하세요.
-        lending = new UpsideAcademyLending(IPriceOracle(address(UpsideOracle)), address(usdc));
+        lending = new UpsideAcademyLending(IPriceOracle(address(upsideOracle)), address(usdc));
         usdc.approve(address(lending), type(uint256).max);
 
         lending.initializeLendingProtocol{value: 1}(address(usdc)); // set reserve ^__^
@@ -91,9 +91,11 @@ contract Testx is Test {
     }
 
     function testDepositUSDCWithEqualValueSucceeds() external {
+        emit log_named_uint("usdc balance", usdc.balanceOf(address(lending)));
         (bool success,) = address(lending).call(
             abi.encodeWithSelector(UpsideAcademyLending.deposit.selector, address(usdc), 2000 ether)
         );
+        emit log_named_uint("usdc balance after", usdc.balanceOf(address(lending)));
         assertTrue(success);
         assertTrue(usdc.balanceOf(address(lending)) == 2000 ether + 1);
     }
@@ -185,10 +187,12 @@ contract Testx is Test {
             (bool success,) = address(lending).call(
                 abi.encodeWithSelector(UpsideAcademyLending.borrow.selector, address(usdc), 1000 ether)
             );
+            emit log_named_uint("limit1", lending.limit(user2));
             assertTrue(success);
             (success,) = address(lending).call(
                 abi.encodeWithSelector(UpsideAcademyLending.borrow.selector, address(usdc), 1000 ether)
             );
+            emit log_named_uint("limit2", lending.limit(user2));
             assertFalse(success);
 
             assertTrue(usdc.balanceOf(user2) == 1000 ether);
@@ -392,6 +396,7 @@ contract Testx is Test {
             assertTrue(success);
 
             // 2000 / (4000 - 1333) * 100 = 74.xxxx
+            // 2000 / (1-1333/4000)
             // LT = 75%
             (success,) = address(lending).call(
                 abi.encodeWithSelector(UpsideAcademyLending.withdraw.selector, address(0x0), 1 ether * 1333 / 4000)
