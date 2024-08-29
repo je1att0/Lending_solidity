@@ -187,12 +187,15 @@ contract Testx is Test {
             (bool success,) = address(lending).call(
                 abi.encodeWithSelector(UpsideAcademyLending.borrow.selector, address(usdc), 1000 ether)
             );
-            emit log_named_uint("limit1", lending.limit(user2));
+            // (uint256 depositedETH, uint256 borrowedUSDC, uint256 lastBlock, uint256 limitLeft) = lending.accounts(user2);
+            // emit log_named_uint("limitLeft", limitLeft);
             assertTrue(success);
             (success,) = address(lending).call(
                 abi.encodeWithSelector(UpsideAcademyLending.borrow.selector, address(usdc), 1000 ether)
             );
-            emit log_named_uint("limit2", lending.limit(user2));
+            // ( depositedETH,  borrowedUSDC, lastBlock, limitLeft) = lending.accounts(user2);
+            // emit log_named_uint("limitLeft", limitLeft);
+
             assertFalse(success);
 
             assertTrue(usdc.balanceOf(user2) == 1000 ether);
@@ -618,7 +621,7 @@ contract Testx is Test {
         }
         vm.stopPrank();
 
-        upsideOracle.setPrice(address(0x0), (4000 * 66 / 100) * 1e18); // drop price to 66%
+        upsideOracle.setPrice(address(0x0), (4000 * 66 / 100) * 1e18); // drop price to 66% // 2640 -> ltv: 1320.
         usdc.transfer(user3, 3000 ether);
 
         vm.startPrank(user3);
@@ -764,8 +767,8 @@ contract Testx is Test {
         }
         vm.stopPrank();
 
-        upsideOracle.setPrice(address(0x0), (4000 * 66 / 100) * 1e18); // drop Ether price to 66%
-        upsideOracle.setPrice(address(usdc), 1e17); // drop USDC price to 0.1, 90% down
+        upsideOracle.setPrice(address(0x0), (4000 * 66 / 100) * 1e18); // drop Ether price to 66% // 4000 -> 2640 / ltv: 1320
+        upsideOracle.setPrice(address(usdc), 1e17); // drop USDC price to 0.1, 90% down // 1 -> 0.1ether
         usdc.transfer(user3, 3000 ether);
 
         vm.startPrank(user3);
