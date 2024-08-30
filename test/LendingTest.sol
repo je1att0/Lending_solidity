@@ -533,13 +533,13 @@ contract Testx is Test {
 
         vm.roll(block.number + (86400 * 500 / 12));  //500일 후
         vm.prank(user3);
-        uint256 a = lending.getAccruedSupplyAmount(address(usdc)); //1500일 후 user3의 이자  = 1547
+        uint256 a = lending.getAccruedSupplyAmount(address(usdc)); //1500일 후 user3의 이자  = 1547 = 792 + 755
 
         vm.prank(user4);
         uint256 b = lending.getAccruedSupplyAmount(address(usdc)); //500일 후 user4의 이자 = 251
 
         vm.prank(user1);
-        uint256 c = lending.getAccruedSupplyAmount(address(usdc)); //1500일 후 user1의 이자 = 5158
+        uint256 c = lending.getAccruedSupplyAmount(address(usdc)); //1500일 후 user1의 이자 = 5158 = 2640 + 2518
 
         assertEq((a + b + c) / 1e18 - 30000000 - 10000000 - 100000000, 6956);
         assertEq(a / 1e18 - 30000000, 1547);
