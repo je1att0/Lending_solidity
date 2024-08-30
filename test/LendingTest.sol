@@ -520,26 +520,26 @@ contract Testx is Test {
         }
         vm.stopPrank();
 
-        vm.roll(block.number + (86400 * 1000 / 12));
+        vm.roll(block.number + (86400 * 1000 / 12)); //1000일 후 user3의 예금 = 30000792
         vm.prank(user3);
         assertTrue(lending.getAccruedSupplyAmount(address(usdc)) / 1e18 == 30000792);
 
         // other lender deposits USDC to our protocol.
-        usdc.transfer(user4, 10000000 ether);
+        usdc.transfer(user4, 10000000 ether); //1000만 이더
         vm.startPrank(user4);
         usdc.approve(address(lending), type(uint256).max);
         lending.deposit(address(usdc), 10000000 ether);
         vm.stopPrank();
 
-        vm.roll(block.number + (86400 * 500 / 12));
+        vm.roll(block.number + (86400 * 500 / 12));  //500일 후
         vm.prank(user3);
-        uint256 a = lending.getAccruedSupplyAmount(address(usdc));
+        uint256 a = lending.getAccruedSupplyAmount(address(usdc)); //1500일 후 user3의 이자  = 1547
 
         vm.prank(user4);
-        uint256 b = lending.getAccruedSupplyAmount(address(usdc));
+        uint256 b = lending.getAccruedSupplyAmount(address(usdc)); //500일 후 user4의 이자 = 251
 
         vm.prank(user1);
-        uint256 c = lending.getAccruedSupplyAmount(address(usdc));
+        uint256 c = lending.getAccruedSupplyAmount(address(usdc)); //1500일 후 user1의 이자 = 5158
 
         assertEq((a + b + c) / 1e18 - 30000000 - 10000000 - 100000000, 6956);
         assertEq(a / 1e18 - 30000000, 1547);
