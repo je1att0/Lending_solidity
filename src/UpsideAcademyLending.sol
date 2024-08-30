@@ -96,6 +96,8 @@ contract UpsideAcademyLending {
         account = accounts[_userAddress];
         // 하루에 86400/12 블록. 1블록은 12초 = 12/86400일
         if (account.borrowedUSDC > 0 ) {
+            emit label('block elapsed');
+            emit log(block.number);
             uint block_elapsed = block.number - account.lastBorrowedBlock;
             if (block_elapsed>0) {
                 account.borrowedUSDCinterest += calExponentialInterestByBlock(account.borrowedUSDC, block_elapsed);
@@ -155,14 +157,10 @@ contract UpsideAcademyLending {
     function checkThreshold (LoanAccount memory _account) public returns (bool) {
         uint ETHprice = upsideOracle.getPrice(address(0x0));
         uint USDCprice = upsideOracle.getPrice(address(usdc));
-        emit label('threshold');
-        emit log(ETHprice*_account.depositedETH);
-        emit log(USDCprice*_account.borrowedUSDC);
-        emit label('interest');
-        emit log(_account.borrowedUSDCinterest);
-        uint threshold = (USDCprice*(_account.borrowedUSDC-_account.borrowedUSDCinterest))/(ETHprice*_account.depositedETH);
-
-        return threshold>THRESHOLD/100;
+        emit label('---');
+        emit log(_account.borrowedUSDC+_account.borrowedUSDCinterest);
+        emit log(ETHprice*_account.depositedETH*THRESHOLD*100);
+        return USDCprice*(_account.borrowedUSDC+_account.borrowedUSDCinterest*1e18)*100<ETHprice*_account.depositedETH*THRESHOLD;
     }
 
     function getAccruedSupplyAmount(address _tokenAddress) public returns (uint256) {

@@ -398,7 +398,7 @@ contract Testx is Test {
             );
             assertTrue(success);
 
-            // 2000 / (4000 - 1333) * 100 = 74.xxxx
+            // 2000 * 100 < 75 * (4000 - 1333)
             // 2000 / (1-1333/4000)
             // LT = 75%
             (success,) = address(lending).call(
