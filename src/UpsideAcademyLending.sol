@@ -14,8 +14,6 @@ interface IPriceOracle {
 contract UpsideAcademyLending {
     using ABDKMathQuad for bytes16;
 
-    event log(uint256 value);
-    event label(string value);
     struct LoanAccount {
         uint256 depositedETH;
         uint256 depositedUSDC;
@@ -81,7 +79,6 @@ contract UpsideAcademyLending {
 
         if (borrowerAccount.borrowedUSDC >= 100 ether) {
             borrowerAccount.liquidableLeft = borrowerAccount.borrowedUSDC*25/100;
-            emit log(borrowerAccount.liquidableLeft);
         } else {
             borrowerAccount.liquidableLeft = borrowerAccount.borrowedUSDC;
         }
@@ -98,29 +95,25 @@ contract UpsideAcademyLending {
         if (account.borrowedUSDC > 0 ) {
             
             uint block_elapsed = block.number - account.lastBorrowedBlock;
-            emit label('block elapsed');
-            emit log(block_elapsed);
+
             if (block_elapsed>0) {
                 if (block_elapsed<86400){
                     account.borrowedUSDCinterest += calExponentialInterestByBlock(account.borrowedUSDC, block_elapsed);
                 }
                 else {
-                    emit label("hi"); 
                     uint day_elapsed = block_elapsed*12/86400;
                     account.borrowedUSDCinterest += calExponentialInterest(account.borrowedUSDC, day_elapsed);
                 }
             }
         }
-        emit label('interest');
-        emit log(account.borrowedUSDCinterest);
+
         if ((((account.depositedETH/10**18)*ETHprice)/USDCprice)*1e18*LTV/100 >= account.borrowedUSDC+account.borrowedUSDCinterest) {
             account.limitLeft = (((account.depositedETH/10**18)*ETHprice)/USDCprice)*1e18*LTV/100-(account.borrowedUSDC+account.borrowedUSDCinterest);
         } else {
             account.limitLeft = 0;
             account.liquidable = true;
         }
-        emit label('limit left');
-        emit log(account.limitLeft);
+
     }
 
     function calExponentialInterestByBlock(uint _total_borrowed_usdc, uint _block_elapsed) public returns (uint256) {
@@ -134,8 +127,6 @@ contract UpsideAcademyLending {
         }
 
         uint256 result = (principal * compoundFactor) / scale;
-        emit label('result');
-        emit log(result);
 
         return result;
     }
@@ -168,9 +159,7 @@ contract UpsideAcademyLending {
     function checkThreshold (LoanAccount memory _account) public returns (bool) {
         uint ETHprice = upsideOracle.getPrice(address(0x0));
         uint USDCprice = upsideOracle.getPrice(address(usdc));
-        emit label('---');
-        emit log(_account.borrowedUSDC+_account.borrowedUSDCinterest);
-        emit log(ETHprice*_account.depositedETH*THRESHOLD*100);
+
         return USDCprice*(_account.borrowedUSDC+_account.borrowedUSDCinterest*1e18)*100<ETHprice*_account.depositedETH*THRESHOLD;
     }
 
@@ -242,7 +231,6 @@ contract UpsideAcademyLending {
         LoanAccount memory account = updatedAccount(_userAddress);
         uint ETHprice = upsideOracle.getPrice(address(0x0));
         require(account.liquidable == true && account.limitLeft == 0, "Loan is not undercollateralized"); 
-        emit log(account.liquidableLeft);
         require(account.liquidableLeft>=_amount, "Exceed amount to liquidate");
         
         uint liquidate_amount = (_amount/ETHprice)*10**18;
