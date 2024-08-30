@@ -96,11 +96,19 @@ contract UpsideAcademyLending {
         account = accounts[_userAddress];
         // 하루에 86400/12 블록. 1블록은 12초 = 12/86400일
         if (account.borrowedUSDC > 0 ) {
-            emit label('block elapsed');
-            emit log(block.number);
+            
             uint block_elapsed = block.number - account.lastBorrowedBlock;
+            emit label('block elapsed');
+            emit log(block_elapsed);
             if (block_elapsed>0) {
-                account.borrowedUSDCinterest += calExponentialInterestByBlock(account.borrowedUSDC, block_elapsed);
+                if (block_elapsed<86400){
+                    account.borrowedUSDCinterest += calExponentialInterestByBlock(account.borrowedUSDC, block_elapsed);
+                }
+                else {
+                    emit label("hi"); 
+                    uint day_elapsed = block_elapsed*12/86400;
+                    account.borrowedUSDCinterest += calExponentialInterest(account.borrowedUSDC, day_elapsed);
+                }
             }
         }
         emit label('interest');
@@ -144,13 +152,16 @@ contract UpsideAcademyLending {
         uint ETHprice = upsideOracle.getPrice(address(0x0));
         uint USDCprice = upsideOracle.getPrice(address(usdc));
         LoanAccount memory account = updatedAccount(msg.sender);
-        account.depositedETH -= _amount;
-        if (account.borrowedUSDC > 0) {
-            require(checkThreshold(account), "Undercollateralized $SEAGOLD loan");
-            }   
+        if (_tokenAddress == address(0x0)) {
+            account.depositedETH -= _amount;
+            if (account.borrowedUSDC > 0) {
+                require(checkThreshold(account), "Undercollateralized $SEAGOLD loan");
+                }   
+            payable(msg.sender).transfer(_amount);
+        } else {
+            usdc.transfer(msg.sender, _amount);
+        }
         accounts[msg.sender] = account;
-
-        payable(msg.sender).transfer(_amount);
     }
     
 
